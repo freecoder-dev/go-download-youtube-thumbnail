@@ -2,57 +2,62 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"log"
 	"net/http"
+	"os"
 	"strings"
-	"time"
 )
 
-var Revision string
-
-type Site struct {
-	Number       int
-	URL          string
-	HTTPCode     int
-	ResponseTime time.Duration
-	StatusMsg    string
-}
-
-func CheckSiteStatus(site *Site) {
-	start := time.Now()
-	resp, err := http.Get(site.URL)
-	elapsed := time.Since(start)
-
-	if err != nil {
-		site.HTTPCode = -1
-		site.StatusMsg = "NOK"
-	} else {
-		site.HTTPCode = resp.StatusCode
-		site.StatusMsg = strings.Split(resp.Status, " ")[1]
-	}
-
-	site.ResponseTime = elapsed.Round(time.Millisecond)
-}
-
 func main() {
-	fmt.Println("Server Status Checker:")
-	fmt.Println()
-	fmt.Println("No.\tURLs\t\t\tCode\tTime\tStatus")
-
-	sites := []Site{
-		{URL: "https://google.com"},
-		{URL: "https://apple.com"},
-		{URL: "https://yahoo.com"},
-		{URL: "https://freecoder.dev"},
+	// Prompt the user to enter a YouTube video URL
+	fmt.Print("Enter the YouTube video URL: ")
+	var videoURL string
+	_, err := fmt.Scanln(&videoURL)
+	if err != nil {
+		log.Fatalf("Failed to read input: %v", err)
 	}
 
-	for i, site := range sites {
-		site.Number = i + 1
-		CheckSiteStatus(&site)
-		fmt.Printf("%d\t%s\t%d\t%.2fs\t%s\n",
-			site.Number,
-			site.URL,
-			site.HTTPCode,
-			site.ResponseTime.Seconds(),
-			site.StatusMsg)
+	// Parse the video ID from the URL
+	videoID := extractVideoID(videoURL)
+	if videoID == "" {
+		log.Fatal("Invalid YouTube video URL")
 	}
+
+	// Construct the thumbnail URL
+	thumbnailURL := fmt.Sprintf("https://img.youtube.com/vi/%s/maxresdefault.jpg", videoID)
+
+	// Download the thumbnail image
+	response, err := http.Get(thumbnailURL)
+	if err != nil {
+		log.Fatalf("Failed to download thumbnail: %v", err)
+	}
+	defer response.Body.Close()
+
+	// Extract the file name from the URL
+	fileName := videoID + ".jpg"
+
+	// Create a new file to save the image
+	file, err := os.Create(fileName)
+	if err != nil {
+		log.Fatalf("Failed to create file: %v", err)
+	}
+	defer file.Close()
+
+	// Copy the image data to the file
+	_, err = io.Copy(file, response.Body)
+	if err != nil {
+		log.Fatalf("Failed to save image: %v", err)
+	}
+
+	fmt.Printf("Thumbnail saved: %s\n", fileName)
+}
+
+func extractVideoID(url string) string {
+	splitURL := strings.Split(url, "?v=")
+	if len(splitURL) != 2 {
+		return ""
+	}
+
+	return splitURL[1]
 }

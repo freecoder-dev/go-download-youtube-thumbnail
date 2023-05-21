@@ -3,7 +3,7 @@
 ## Project build configuration
 ##
 ##------------------------------
-APP_NAME = server-status
+APP_NAME = yt-thmubnail
 APP_BINARY = ../bin/${APP_NAME}
 MAIN_ENTRY = ../src/app
 
@@ -23,7 +23,7 @@ build:
 ## build and run the application
 run: build
 	@chmod u+x ${APP_BINARY}
-	@${APP_BINARY} &
+	@${APP_BINARY}
 	@echo "started..."
 
 ## clean and delete binaries
