@@ -1,2 +1,2 @@
-# go-server-checker
-This code allow to Check the status of servers.
+# go-yt-thumbnail
+This code allow to download thumbnail of a youtube video.
